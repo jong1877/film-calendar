@@ -39,7 +39,7 @@ function weekdayLabel(dateStr) {
 }
 
 function formatDateWithWeekday(dateStr) {
-  return `${dateStr}(${weekdayLabel(dateStr)})`;
+  return `${dateStr} ${weekdayLabel(dateStr)}요일`;
 }
 
 function formatDateRange(job) {
