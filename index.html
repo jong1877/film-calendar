@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Film calendar</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1f2937">
+<link rel="icon" href="icon-192.png" type="image/png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Film calendar">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="styles.css">
+<script>
+  (function () {
+    var saved = localStorage.getItem('shooting_log_theme_v1');
+    var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.dataset.theme = saved || (dark ? 'dark' : 'light');
+  })();
+</script>
+</head>
+<body>
+<div id="app">
+
+  <header class="topbar">
+    <div class="topbar-row">
+      <h1>Film calendar</h1>
+      <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="다크/라이트 모드 전환"></button>
+    </div>
+    <nav class="tabs">
+      <button class="tab-btn" data-view="dashboard">대시보드</button>
+      <button class="tab-btn" data-view="jobs">일정 목록</button>
+      <button class="tab-btn" data-view="settings">설정</button>
+    </nav>
+  </header>
+
+  <main>
+
+    <section id="view-dashboard" class="view">
+      <div class="month-nav">
+        <button id="dashPrevMonth" class="icon-btn">‹</button>
+        <span id="dashMonthLabel" class="month-label"></span>
+        <button id="dashNextMonth" class="icon-btn">›</button>
+      </div>
+
+      <div class="calendar-toggle-row">
+        <button id="calendarToggleBtn" class="link-btn"></button>
+      </div>
+      <div id="calendarGrid" class="calendar-grid"></div>
+
+      <div class="summary-grid">
+        <div class="card">
+          <div class="card-label">촬영 건수</div>
+          <div class="card-value" id="sumCount">0건</div>
+        </div>
+        <div class="card card-total">
+          <div class="card-label">총 매출</div>
+          <div class="card-value" id="sumTotal">0원</div>
+        </div>
+        <div class="card card-settled">
+          <div class="card-label">정산 완료</div>
+          <div class="card-value" id="sumSettled">0원</div>
+        </div>
+        <div class="card card-unsettled">
+          <div class="card-label">미정산</div>
+          <div class="card-value" id="sumUnsettled">0원</div>
+        </div>
+      </div>
+
+      <h2 class="section-title">카테고리별 현황</h2>
+      <div id="categoryBreakdown" class="category-list"></div>
+    </section>
+
+    <section id="view-jobs" class="view" hidden>
+      <div id="jobsMonthNav" class="month-nav">
+        <button id="jobsPrevMonth" class="icon-btn">‹</button>
+        <span id="jobsMonthLabel" class="month-label"></span>
+        <button id="jobsNextMonth" class="icon-btn">›</button>
+      </div>
+
+      <label class="checkbox-row all-unsettled-row">
+        <input type="checkbox" id="showAllUnsettled">
+        전체 미정산 보기 (모든 달)
+      </label>
+
+      <div class="filter-row">
+        <select id="filterCategory">
+          <option value="">전체 카테고리</option>
+        </select>
+        <select id="filterSettled">
+          <option value="">전체</option>
+          <option value="settled">정산 완료</option>
+          <option value="unsettled">미정산</option>
+        </select>
+        <button id="addJobBtn" class="primary-btn">+ 새 일정</button>
+      </div>
+
+      <div id="jobsSummary" class="hint" hidden></div>
+      <div id="jobList" class="job-list"></div>
+    </section>
+
+    <section id="view-settings" class="view" hidden>
+      <h2 class="section-title">네이버 캘린더 동기화</h2>
+      <p class="hint">
+        네이버 캘린더에서 일정을 내보낸 <b>.ics 파일</b>을 아래에서 불러오면 자동으로 일정이 추가/갱신됩니다.<br>
+        인식을 위해 아래 형식으로 일정을 입력해두세요.
+      </p>
+      <pre class="convention-box">제목: [카테고리] 클라이언트명   예) [광고] OO기업
+
+메모(설명):
+단가: 500000
+조수: 홍길동, 김철수</pre>
+      <p class="hint">형식에 맞지 않는 일정은 "미분류"로 들어오며, 일정 목록에서 직접 수정할 수 있습니다. 여러 날짜에 걸친(종일) 일정은 기간이 그대로 인식됩니다.</p>
+
+      <input type="file" id="icsFileInput" accept=".ics" hidden>
+      <button id="icsUploadBtn" class="primary-btn">.ics 파일 불러오기</button>
+      <div id="syncResult" class="hint"></div>
+
+      <h2 class="section-title">데이터 백업</h2>
+      <p class="hint">이 앱의 모든 데이터는 이 기기의 브라우저에만 저장됩니다. 기기를 바꾸거나 브라우저 데이터를 지우면 사라지니, 주기적으로 백업하세요.</p>
+      <button id="exportBtn" class="secondary-btn">JSON으로 내보내기</button>
+      <input type="file" id="importFileInput" accept=".json" hidden>
+      <button id="importBtn" class="secondary-btn">JSON 가져오기</button>
+
+      <h2 class="section-title danger-title">위험 구역</h2>
+      <button id="resetBtn" class="danger-btn">모든 데이터 초기화</button>
+    </section>
+
+  </main>
+</div>
+
+<div id="jobModal" class="modal-backdrop" hidden>
+  <div class="modal">
+    <h2 id="jobModalTitle">새 일정</h2>
+    <form id="jobForm">
+      <label>날짜 (시작일)
+        <input type="date" id="fDate" required>
+      </label>
+      <label id="endDateRow" hidden>종료일
+        <input type="date" id="fEndDate">
+      </label>
+      <label class="checkbox-row">
+        <input type="checkbox" id="fMultiDay">
+        프로젝트
+      </label>
+      <label id="projectColorRow" hidden>캘린더 색상
+        <input type="color" id="fProjectColor" value="#8C6BFF">
+      </label>
+      <label>카테고리
+        <select id="fCategory">
+          <option value="컨텐츠">컨텐츠</option>
+          <option value="광고">광고</option>
+          <option value="영화">영화</option>
+          <option value="드라마">드라마</option>
+          <option value="웹예능">웹예능</option>
+          <option value="홍보영상">홍보영상</option>
+          <option value="스케치">스케치</option>
+          <option value="인터뷰">인터뷰</option>
+          <option value="미분류">미분류</option>
+        </select>
+      </label>
+      <label>클라이언트/프로젝트명
+        <input type="text" id="fClientName" required>
+      </label>
+      <label>단가 (원)
+        <input type="number" id="fRate" min="0" step="1000" required>
+      </label>
+      <label>조수 (콤마로 구분)
+        <input type="text" id="fAssistants" placeholder="홍길동, 김철수">
+      </label>
+      <label>메모
+        <textarea id="fMemo" rows="2"></textarea>
+      </label>
+      <label class="checkbox-row">
+        <input type="checkbox" id="fSettled">
+        정산 완료
+      </label>
+      <label id="settledDateRow" hidden>정산일
+        <input type="date" id="fSettledDate">
+      </label>
+
+      <div class="modal-actions">
+        <button type="button" id="deleteJobBtn" class="danger-btn" hidden>삭제</button>
+        <div class="spacer"></div>
+        <button type="button" id="cancelJobBtn" class="secondary-btn">취소</button>
+        <button type="submit" class="primary-btn">저장</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
