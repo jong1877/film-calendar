@@ -34,9 +34,17 @@ function monthKeyOf(dateStr) {
   return dateStr.slice(0, 7);
 }
 
+function weekdayLabel(dateStr) {
+  return WEEKDAY_LABELS[new Date(dateStr + 'T00:00:00').getDay()];
+}
+
+function formatDateWithWeekday(dateStr) {
+  return `${dateStr}(${weekdayLabel(dateStr)})`;
+}
+
 function formatDateRange(job) {
-  if (!job.endDate || job.endDate === job.date) return job.date;
-  return `${job.date} ~ ${job.endDate}`;
+  if (!job.endDate || job.endDate === job.date) return formatDateWithWeekday(job.date);
+  return `${formatDateWithWeekday(job.date)} ~ ${formatDateWithWeekday(job.endDate)}`;
 }
 
 function hexToRgbArr(hex) {
